@@ -1,18 +1,18 @@
-# Hum 'slim' version use kar rahe hain jo size mein chota hota hai
-FROM python:3.9-slim
+from flask import Flask
+import redis
 
-# Container ke andar kaam ki jagah
-WORKDIR /app
+app = Flask(__name__)
+# Yahan 'db' wahi hai jo tumne docker-compose mein rakha hai
+cache = redis.Redis(host='db', port=6379)
 
-# Pehle requirements copy karke install karte hain (ye caching mein help karta hai)
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+def get_hit_count():
+    return cache.incr('hits')
 
-# Baaki sara code copy karo
-COPY . .
+@app.route('/')
+def hello():
+    count = get_hit_count()
+    return f'Assalam o Alaikum! Hits: {count}\n'
 
-# App kis port par chalegi
-EXPOSE 5000
-
-# App ko start karne ki command
-CMD ["python", "app.py"]
+if __name__ == "__main__":
+    # YEH LINE ZAROORI HAI
+    app.run(host='0.0.0.0', port=5000)
